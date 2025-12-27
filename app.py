@@ -310,7 +310,7 @@ def resize():
             height = int(request.form.get('height', 800))
 
             resized_img = img.resize((width, height))
-            resized_img.save(buffer, format=img.format)
+            resized_img.save(buffer, format="JPEG")
             buffer.seek(0)
 
             # Upload processed image to MinIO
