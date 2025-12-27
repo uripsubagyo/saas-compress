@@ -117,10 +117,10 @@ def upgrade(plan):
     db.session.commit()
     
     flash(f'Payment successful! You are now subscribed to the {plan} plan.', 'success')
-    return redirect(url_for('tool'))
+    return redirect(url_for('index'))
 
-@app.route('/tool', methods=['GET', 'POST'])
-def tool():
+@app.route('/compress', methods=['GET', 'POST'])
+def compress():
     if request.method == 'POST':
         # Check Usage Limits
         is_pro = False
@@ -173,6 +173,7 @@ def tool():
         # Process Image
         try:
             img = Image.open(file)
+            img.verify()
             buffer = io.BytesIO()
             
             # Options
@@ -208,7 +209,99 @@ def tool():
             flash(f'Error processing image: {e}', 'danger')
             return redirect(request.url)
 
-    return render_template('tool.html')
+    return render_template('compress.html')
+
+@app.route('/resize', methods=['GET', 'POST'])
+def resize():
+    if request.method == 'POST':
+        # Check Usage Limits
+        is_pro = False
+        is_guest = not current_user.is_authenticated
+        
+        if not is_guest:
+            is_pro = current_user.subscription_tier == 'pro'
+            
+            # Reset daily count if new day
+            today = datetime.utcnow().date()
+            if current_user.last_usage_date != today:
+                current_user.daily_usage_count = 0
+                current_user.last_usage_date = today
+                db.session.commit()
+            
+            if not is_pro and current_user.daily_usage_count >= 5:
+                flash('Daily limit reached (5/5). Upgrade to Pro for unlimited access!', 'warning')
+                return redirect(url_for('pricing'))
+        else:
+            # Guest Limit
+            guest_usage = session.get('guest_usage', 0)
+            if guest_usage >= 1:
+                flash('Guest limit reached (1/1). Please register for more access.', 'info')
+                return redirect(url_for('register'))
+
+        if 'image' not in request.files:
+            flash('No file uploaded', 'danger')
+            return redirect(request.url)
+        
+        file = request.files['image']
+        if file.filename == '':
+            flash('No file selected', 'danger')
+            return redirect(request.url)
+            
+        # Check size
+        file.seek(0, os.SEEK_END)
+        file_length = file.tell()
+        file.seek(0)
+
+        # Upload original image to MinIO
+        original_path = f"original/{current_user.id if not is_guest else 'guest'}/{file.filename}"
+        upload_to_minio(file.read(), original_path, file.content_type)
+        
+        max_size = 10 * 1024 * 1024 if is_pro else 2 * 1024 * 1024
+        
+        if file_length > max_size:
+            flash(f'File too large. Limit is {"10MB" if is_pro else "2MB"}.', 'warning')
+            return redirect(request.url)
+            
+        # Process Image
+        try:
+            img = Image.open(file)
+            img.verify()
+            img_mimetype = "image/jpeg" if img.format == "JPEG" or "JPG" else "image/png"
+            buffer = io.BytesIO()
+                
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+
+            width = int(request.form.get('width', 800))
+            height = int(request.form.get('height', 800))
+
+            resized_img = img.resize((width, height))
+            resized_img.save(buffer, format=img.format)
+            buffer.seek(0)
+
+            # Upload processed image to MinIO
+            processed_path = f"processed/{current_user.id if not is_guest else 'guest'}/resized_{file.filename}"
+            upload_to_minio(buffer.getvalue(), processed_path, img_mimetype)
+            
+            # Increment Usage Count
+            if not is_guest:
+                current_user.daily_usage_count += 1
+                db.session.commit()
+            else:
+                session['guest_usage'] = session.get('guest_usage', 0) + 1
+            
+            return send_file(
+                buffer, 
+                as_attachment=True, 
+                download_name=f'resized_{file.filename.rsplit(".", 1)[0]}.jpg', 
+                mimetype=img_mimetype
+            )
+            
+        except Exception as e:
+            flash(f'Error processing image: {e}', 'danger')
+            return redirect(request.url)
+
+    return render_template('resize.html')
 
 @app.route('/admin')
 @login_required
