@@ -3,16 +3,17 @@
 {% block content %}
 <div class="row align-items-center py-5">
     <div class="col-lg-6">
-        <h1 class="display-4 fw-bold mb-3">Compress Images with <span class="text-primary">Zero Quality Loss</span></h1>
+        <h1 class="display-4 fw-bold mb-3">Compress or Resize Images with <span class="text-primary">Zero Quality Loss</span></h1>
         <p class="lead text-muted mb-4">Fast, secure, and easy-to-use image optimization for web professionals.</p>
         <div class="d-flex gap-3">
-            <a href="{{ url_for('tool') }}" class="btn btn-primary btn-lg">Try the Tool</a>
+            <a href="{{ url_for('compress') }}" class="btn btn-primary btn-lg">Try Image Compressor</a>
+            <a href="{{ url_for('resize') }}" class="btn btn-primary btn-lg">Try Image Resizer</a>
             <a href="{{ url_for('pricing') }}" class="btn btn-outline-secondary btn-lg">View Pricing</a>
         </div>
     </div>
     <div class="col-lg-6 text-center">
-        <img src="https://via.placeholder.com/600x400?text=Image+Compression+Visual"
-            class="img-fluid rounded-3 shadow-lg" alt="Hero Image">
+        <img src="https://picsum.photos/id/250/600/400"
+            class="img-fluid rounded-3 shadow-lg" alt="Image depicting camera">
     </div>
 </div>
 
