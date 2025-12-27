@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="fw-bold">Simple Pricing</h1>
+    <p class="lead text-muted">Choose the plan that fits your needs.</p>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 mb-3 text-center">
+    <div class="col">
+        <div class="card mb-4 rounded-3 shadow-sm">
+            <div class="card-header py-3">
+                <h4 class="my-0 fw-normal">Weekly</h4>
+            </div>
+            <div class="card-body">
+                <h1 class="card-title pricing-card-title">$5<small class="text-muted fw-light">/week</small></h1>
+                <ul class="list-unstyled mt-3 mb-4">
+                    <li>10MB Upload Limit</li>
+                    <li>Custom Compression Quality</li>
+                    <li>Priority Support</li>
+                </ul>
+                <button type="button" class="w-100 btn btn-lg btn-outline-primary"
+                    onclick="openPaymentModal('weekly')">Choose Weekly</button>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card mb-4 rounded-3 shadow-sm border-primary">
+            <div class="card-header py-3 text-white bg-primary border-primary">
+                <h4 class="my-0 fw-normal">Monthly</h4>
+            </div>
+            <div class="card-body">
+                <h1 class="card-title pricing-card-title">$15<small class="text-muted fw-light">/mo</small></h1>
+                <ul class="list-unstyled mt-3 mb-4">
+                    <li>10MB Upload Limit</li>
+                    <li>Custom Compression Quality</li>
+                    <li>Priority Support</li>
+                </ul>
+                <button type="button" class="w-100 btn btn-lg btn-primary" onclick="openPaymentModal('monthly')">Choose
+                    Monthly</button>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card mb-4 rounded-3 shadow-sm">
+            <div class="card-header py-3">
+                <h4 class="my-0 fw-normal">Yearly</h4>
+            </div>
+            <div class="card-body">
+                <h1 class="card-title pricing-card-title">$150<small class="text-muted fw-light">/yr</small></h1>
+                <ul class="list-unstyled mt-3 mb-4">
+                    <li>10MB Upload Limit</li>
+                    <li>Custom Compression Quality</li>
+                    <li>Priority Support</li>
+                </ul>
+                <button type="button" class="w-100 btn btn-lg btn-outline-primary"
+                    onclick="openPaymentModal('yearly')">Choose Yearly</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Scan to Pay</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Please scan the QRIS code below to complete your payment.</p>
+                <img src="https://via.placeholder.com/250x250?text=QRIS+Dummy+Code" class="img-fluid mb-3"
+                    alt="QRIS Code">
+                <p class="text-muted small">Simulation: Clicking the button below will instantly upgrade you.</p>
+            </div>
+            <div class="modal-footer">
+                <form id="upgradeForm" method="POST" action="">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">I Have Paid</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openPaymentModal(plan) {
+        const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+        document.getElementById('upgradeForm').action = "{{ url_for('upgrade', plan='') }}" + plan;
+        modal.show();
+    }
+</script>
+{% endblock %}
