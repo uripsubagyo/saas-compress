@@ -169,11 +169,18 @@ def compress():
         if file_length > max_size:
             flash(f'File too large. Limit is {"10MB" if is_pro else "2MB"}.', 'warning')
             return redirect(request.url)
+        
+        # Validate Image
+        try:
+            img = Image.open(file)
+            img.verify()
+        except Exception:
+            flash("Invalid image file", "danger")
+            return redirect(request.url)
             
         # Process Image
         try:
             img = Image.open(file)
-            img.verify()
             buffer = io.BytesIO()
             
             # Options
@@ -261,11 +268,18 @@ def resize():
         if file_length > max_size:
             flash(f'File too large. Limit is {"10MB" if is_pro else "2MB"}.', 'warning')
             return redirect(request.url)
+        
+        # Validate Image
+        try:
+            img = Image.open(file)
+            img.verify()
+        except Exception:
+            flash("Invalid image file", "danger")
+            return redirect(request.url)
             
         # Process Image
         try:
             img = Image.open(file)
-            img.verify()
             img_mimetype = "image/jpeg" if img.format == "JPEG" or "JPG" else "image/png"
             buffer = io.BytesIO()
                 
