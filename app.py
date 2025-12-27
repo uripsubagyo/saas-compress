@@ -280,7 +280,8 @@ def resize():
         # Process Image
         try:
             img = Image.open(file)
-            img_mimetype = "image/jpeg" if img.format == "JPEG" or "JPG" else "image/png"
+            img_mimetype = "image/jpeg" if img.format == "JPEG" else "image/png"
+            img_format = img.format.lower()
             buffer = io.BytesIO()
                 
             if img.mode in ("RGBA", "P"):
@@ -307,7 +308,7 @@ def resize():
             return send_file(
                 buffer, 
                 as_attachment=True, 
-                download_name=f'resized_{file.filename.rsplit(".", 1)[0]}.jpg', 
+                download_name=f'resized_{file.filename.rsplit(".", 1)[0]}.{img_format}', 
                 mimetype=img_mimetype
             )
             
