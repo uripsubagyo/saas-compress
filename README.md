@@ -25,7 +25,7 @@ Pastikan VM / EC2 instance sudah memiliki:
 ## 2. Clone Repository
 
 ```bash
-git clone <URL_REPOSITORY_KAMU>
+git clone https://github.com/uripsubagyo/saas-compress.git
 cd saas-compress
 ```
 
