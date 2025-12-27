@@ -35,6 +35,9 @@ s3_client = boto3.client(
     region_name="us-east-1"
 )
 
+# Allowed extensions config
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
+
 # Helper function
 def upload_to_minio(file_bytes, object_name, content_type="image/jpeg"):
     s3_client.put_object(
@@ -43,6 +46,14 @@ def upload_to_minio(file_bytes, object_name, content_type="image/jpeg"):
         Body=file_bytes,
         ContentType=content_type
     )
+
+def allowed_file(filename):
+    if "." not in filename:
+        return False
+
+    ext = filename.rsplit(".", 1)[1].lower()
+    return ext in ALLOWED_EXTENSIONS
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -151,8 +162,21 @@ def compress():
             return redirect(request.url)
         
         file = request.files['image']
-        if file.filename == '':
-            flash('No file selected', 'danger')
+        
+        if not file or file.filename == "":
+            flash("No file selected.", "danger")
+            return redirect(request.url)
+
+        if not allowed_file(file.filename):
+            flash("Only JPG, JPEG, and PNG files are allowed.", "danger")
+            return redirect(request.url)
+        
+        # Image validation
+        try:
+            img = Image.open(file)
+            img.load()
+        except Exception:
+            flash("Invalid image file.", "danger")
             return redirect(request.url)
             
         # Check size
@@ -168,14 +192,6 @@ def compress():
         
         if file_length > max_size:
             flash(f'File too large. Limit is {"10MB" if is_pro else "2MB"}.', 'warning')
-            return redirect(request.url)
-        
-        # Validate Image
-        try:
-            img = Image.open(file)
-            img.verify()
-        except Exception:
-            flash("Invalid image file", "danger")
             return redirect(request.url)
             
         # Process Image
@@ -250,8 +266,21 @@ def resize():
             return redirect(request.url)
         
         file = request.files['image']
-        if file.filename == '':
-            flash('No file selected', 'danger')
+        
+        if not file or file.filename == "":
+            flash("No file selected.", "danger")
+            return redirect(request.url)
+
+        if not allowed_file(file.filename):
+            flash("Only JPG, JPEG, and PNG files are allowed.", "danger")
+            return redirect(request.url)
+        
+        # Image validation
+        try:
+            img = Image.open(file)
+            img.load()
+        except Exception:
+            flash("Invalid image file.", "danger")
             return redirect(request.url)
             
         # Check size
@@ -267,14 +296,6 @@ def resize():
         
         if file_length > max_size:
             flash(f'File too large. Limit is {"10MB" if is_pro else "2MB"}.', 'warning')
-            return redirect(request.url)
-        
-        # Validate Image
-        try:
-            img = Image.open(file)
-            img.verify()
-        except Exception:
-            flash("Invalid image file", "danger")
             return redirect(request.url)
             
         # Process Image
