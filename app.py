@@ -195,7 +195,7 @@ def compress():
             buffer.seek(0)
 
             # Upload processed image to MinIO
-            processed_path = f"processed/{current_user.id if not is_guest else 'guest'}/compressed_{file.filename}"
+            processed_path = f"processed/{current_user.id if not is_guest else 'guest'}/compressed_{file.filename.rsplit('.', 1)[0]}.jpg"
             upload_to_minio(buffer.getvalue(), processed_path, "image/jpeg")
             
             # Increment Usage Count
@@ -280,8 +280,6 @@ def resize():
         # Process Image
         try:
             img = Image.open(file)
-            img_mimetype = "image/jpeg" if img.format == "JPEG" else "image/png"
-            img_format = img.format.lower()
             buffer = io.BytesIO()
                 
             if img.mode in ("RGBA", "P"):
@@ -295,8 +293,8 @@ def resize():
             buffer.seek(0)
 
             # Upload processed image to MinIO
-            processed_path = f"processed/{current_user.id if not is_guest else 'guest'}/resized_{file.filename}"
-            upload_to_minio(buffer.getvalue(), processed_path, img_mimetype)
+            processed_path = f"processed/{current_user.id if not is_guest else 'guest'}/resized_{file.filename.rsplit('.', 1)[0]}.jpg"
+            upload_to_minio(buffer.getvalue(), processed_path, "image/jpeg")
             
             # Increment Usage Count
             if not is_guest:
@@ -308,8 +306,8 @@ def resize():
             return send_file(
                 buffer, 
                 as_attachment=True, 
-                download_name=f'resized_{file.filename.rsplit(".", 1)[0]}.{img_format}', 
-                mimetype=img_mimetype
+                download_name=f'resized_{file.filename.rsplit(".", 1)[0]}.jpg', 
+                mimetype="image/jpeg"
             )
             
         except Exception as e:
