@@ -6,9 +6,11 @@ from PIL import Image
 import os
 import io
 from datetime import datetime, timedelta
+import boto3
+from botocore.client import Config
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'dev-secret-key'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -17,6 +19,30 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
+
+# MinIO S3 configuration
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin123")
+MINIO_BUCKET = os.getenv("MINIO_BUCKET", "tk-image-storage")
+
+s3_client = boto3.client(
+    "s3",
+    endpoint_url=MINIO_ENDPOINT,
+    aws_access_key_id=MINIO_ACCESS_KEY,
+    aws_secret_access_key=MINIO_SECRET_KEY,
+    config=Config(signature_version="s3v4"),
+    region_name="us-east-1"
+)
+
+# Helper function
+def upload_to_minio(file_bytes, object_name, content_type="image/jpeg"):
+    s3_client.put_object(
+        Bucket=MINIO_BUCKET,
+        Key=object_name,
+        Body=file_bytes,
+        ContentType=content_type
+    )
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -133,6 +159,10 @@ def tool():
         file.seek(0, os.SEEK_END)
         file_length = file.tell()
         file.seek(0)
+
+        # Upload original image to MinIO
+        original_path = f"original/{current_user.id if not is_guest else 'guest'}/{file.filename}"
+        upload_to_minio(file.read(), original_path, file.content_type)
         
         max_size = 10 * 1024 * 1024 if is_pro else 2 * 1024 * 1024
         
@@ -155,6 +185,10 @@ def tool():
                 
             img.save(buffer, format="JPEG", quality=quality, optimize=True)
             buffer.seek(0)
+
+            # Upload processed image to MinIO
+            processed_path = f"processed/{current_user.id if not is_guest else 'guest'}/compressed_{file.filename}"
+            upload_to_minio(buffer.getvalue(), processed_path, "image/jpeg")
             
             # Increment Usage Count
             if not is_guest:

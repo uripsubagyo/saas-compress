@@ -19,5 +19,15 @@ EXPOSE 5000
 # Define environment variable
 ENV FLASK_APP=app.py
 
-# Run the application
-CMD ["python", "-m", "flask", "run", "--host=0.0.0.0"]
+# Hardcoded ENV (only for assignment purposes)
+ENV FLASK_ENV=development
+ENV SECRET_KEY=dev-secret-key
+ENV DATABASE_URL=sqlite:///db.sqlite3
+
+ENV MINIO_ENDPOINT=http://minio:9000
+ENV MINIO_ACCESS_KEY=minioadmin
+ENV MINIO_SECRET_KEY=minioadmin123
+ENV MINIO_BUCKET=tk-image-storage
+
+# Run the application with gunicorn
+CMD ["gunicorn", "-w", "3", "-b", "0.0.0.0:5000", "app:app"]
